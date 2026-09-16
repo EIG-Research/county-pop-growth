@@ -1,2 +1,2 @@
-# county-pop-growth
-Repository for If demography is destiny, can communities change their fate?
+# County Population Growth
+Repository for the Agglomerations post ["If demography is destiny, can communities change their fate?"]() by Jason He, Kenan Fikri, and Benjamin Glasner published on September XX, 2026. This is a follow-up to our contribution to the New York Times article ["Want to Entice New Residents? Offer Cash, for a Start"](https://www.nytimes.com/2026/09/12/business/economy/rural-america-moving-incentives.html) by Lydia DePillis.
