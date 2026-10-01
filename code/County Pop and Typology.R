@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
 
 # --- Paths -------------------------------------------------------------------
 if (!exists("path_project")) {
-  path_project   <- "/Users/jiaxinhe/Documents/projects/Claude Projects/nyt-pop-typology"
+  path_project   <- ""
   path_data      <- file.path(path_project, "data")
   path_raw       <- file.path(path_data, "raw")
   path_crosswalk <- file.path(path_raw, "crosswalk")
