@@ -1,15 +1,6 @@
 # County Population Growth
 Repository for the Agglomerations post ["If demography is destiny, can communities change their fate?"](https://agglomerations.eig.org/publish/post/218345622?utm_campaign=post-expanded-share&utm_medium=web) by Jason He, Kenan Fikri, and Benjamin Glasner published on September XX, 2026. This is a follow-up to our contribution to the New York Times article ["Want to Entice New Residents? Offer Cash, for a Start"](https://www.nytimes.com/2026/09/12/business/economy/rural-america-moving-incentives.html) by Lydia DePillis.
 
-## What the analysis finds
-
-- Rural counties grew 2.1 percent from 2019 to 2025, after shrinking 0.2 percent over the six years before. Large urban counties moved the other way, from 5.0 percent growth to 2.0 percent.
-- Rural growth is concentrated in the rural fringes of metropolitan areas. Metro rural counties grew 5.5 percent from 2019 to 2025; non-metro rural counties grew 0.9 percent.
-- Residents over 55 drive rural growth in both. What changed after 2019 is that metro rural counties stopped losing younger people: their under-25 population rose 3.2 percent and their 25-to-54 population rose 4.3 percent, against losses of 1.9 and 3.0 percent in the prior six years.
-- Household interstate migration peaked at 2.46 percent in 2022 and fell to 2.08 percent by 2024, close to the 1.91 percent series low set in 2010.
-
-Every figure above is reproduced by the tables in `output/tables/`.
-
 ## Repository map
 
 | Path | Contents |
