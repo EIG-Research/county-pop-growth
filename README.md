@@ -1,5 +1,5 @@
 # County Population Growth
-Repository for the Agglomerations post ["If demography is destiny, can communities change their fate?"](https://agglomerations.eig.org/publish/post/218345622?utm_campaign=post-expanded-share&utm_medium=web) by Jason He, Kenan Fikri, and Benjamin Glasner published on September XX, 2026. This is a follow-up to our contribution to the New York Times article ["Want to Entice New Residents? Offer Cash, for a Start"](https://www.nytimes.com/2026/09/12/business/economy/rural-america-moving-incentives.html) by Lydia DePillis.
+Repository for the Agglomerations post ["If demography is destiny, can communities change their fate?"](https://agglomerations.eig.org/publish/post/218345622?utm_campaign=post-expanded-share&utm_medium=web) by Jiaxin (Jason) He, Kenan Fikri, and Benjamin Glasner published on October 2, 2026. This is a follow-up to our contribution to the New York Times article ["Want to Entice New Residents? Offer Cash, for a Start"](https://www.nytimes.com/2026/09/12/business/economy/rural-america-moving-incentives.html) by Lydia DePillis.
 
 ## Repository map
 
