@@ -1,0 +1,13 @@
+# A comment says median; the code computes a mean.
+
+--- a/code/05_households.R
++++ b/code/05_households.R
+@@ -58,7 +58,7 @@
+ ###                           4. Income by region                            ###
+ ################################################################################
+ 
+-# 4) Mean household income by region, weighted to the population
++# 4) Median household income by region, weighted to the population
+ income_by_region <- households |>
+   inner_join(
+     states,

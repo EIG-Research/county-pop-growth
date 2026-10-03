@@ -1,0 +1,8 @@
+# Keep renv's dependency scan to the project lane. The template machinery below
+# holds fixture and style scripts whose packages the project does not need.
+/Infrastructure/
+/.claude/
+/.codex/
+/.agents/
+review-reports/
+temp/

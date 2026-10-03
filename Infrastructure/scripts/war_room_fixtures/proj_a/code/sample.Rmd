@@ -1,0 +1,21 @@
+---
+title: "War room fixture"
+---
+
+Synthetic fixture document. Nothing here is a real result.
+
+```{r setup}
+library(dplyr)
+```
+
+The next chunk keeps prime-age adults only.
+
+```{r sample}
+adults <- people %>%
+  filter(age >= 25)
+```
+
+```{r output}
+adults %>%
+  summarise(n = dplyr::n())
+```

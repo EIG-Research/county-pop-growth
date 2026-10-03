@@ -1,0 +1,6 @@
+# Written by the EIG template's port_template.py; the next port reads it.
+template_version: 2.0.0
+template_commit: 51bed3dad6f1b2da7c0dbe0624cf77a06301e58f
+mode: adopt
+ported: 2026-10-02
+project_lane: template

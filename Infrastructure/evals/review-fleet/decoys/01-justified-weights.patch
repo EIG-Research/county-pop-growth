@@ -1,0 +1,15 @@
+# An explicit rationale for the weighted regression.
+
+--- a/code/02_analysis.R
++++ b/code/02_analysis.R
+@@ -80,7 +80,9 @@
+ ################################################################################
+ 
+ # 6) Log wage on age and sex, with state and year fixed effects, weighted by
+-#    person_weight, with standard errors clustered by state (20 clusters)
++#    person_weight, with standard errors clustered by state (20 clusters).
++#    The weights make the estimate describe the population the sample
++#    represents; section 6 shows the unweighted estimate beside it
+ wage_model <- feols(
+   log_hourly_wage ~ age + female_flag | state_code + year,
+   data = analysis_sample,

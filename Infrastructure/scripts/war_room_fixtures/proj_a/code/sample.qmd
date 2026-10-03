@@ -1,0 +1,20 @@
+---
+title: "War room fixture (Quarto)"
+---
+
+## Synthetic example
+
+Nothing here is a real result.
+
+```{r}
+#| label: setup
+library(dplyr)
+```
+
+```{r}
+#| label: sample
+adults <- people |>
+  filter(age >= 25)
+```
+
+Prose closing note.

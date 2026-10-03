@@ -1,0 +1,21 @@
+# Zero-padded state FIPS read as integers, so states 01-09 no longer match.
+
+--- a/code/04_min_wage.R
++++ b/code/04_min_wage.R
+@@ -43,7 +43,7 @@
+   file.path(path_example, "state_fips.csv"),
+   col_types = cols(
+     state_code = col_character(),
+-    state_fips = col_character()
++    state_fips = col_integer()
+   )
+ )
+ 
+@@ -66,6 +66,7 @@
+ # 5) Attach each worker's state and year minimum wage: one row per worker
+ workers_min_wage <- min_wage_sample |>
+   left_join(state_fips, by = "state_code", relationship = "many-to-one") |>
++  mutate(state_fips = as.character(state_fips)) |>
+   left_join(
+     min_wage,
+     by = c("state_fips", "year" = "min_wage_year"),

@@ -1,0 +1,64 @@
+# Fixture prediction set for proj_a code/sample.py.
+b001:
+  title: File header
+  density: low
+  prediction:
+    what_it_does: Two comment lines saying the file is a synthetic fixture.
+    inferred_intent: Warn a reader that nothing in the file is a real analysis.
+    assumptions: []
+    confidence: high
+b002:
+  title: Imports
+  density: low
+  prediction:
+    what_it_does: Imports the csv and statistics modules under a cell marker.
+    inferred_intent: Make CSV reading and a mean available.
+    assumptions: []
+    confidence: high
+b003:
+  title: Input path constant
+  density: medium
+  prediction:
+    what_it_does: Binds a relative CSV path to a module-level constant.
+    inferred_intent: Name the input file once.
+    assumptions:
+      - The process runs from the project root, so the relative path resolves.
+    confidence: medium
+b004:
+  title: Age restriction helper
+  density: high
+  prediction:
+    what_it_does: Returns the rows whose age field, read as an integer, is 25 or more.
+    inferred_intent: Restrict the sample to prime-age adults.
+    assumptions:
+      - Every row has a parseable age.
+      - The lower bound is meant to be inclusive.
+    confidence: medium
+b005:
+  title: Wage share helper
+  density: low
+  prediction:
+    what_it_does: Defines a function returning one number divided by another.
+    inferred_intent: Express a wage total as a share of some other total.
+    assumptions:
+      - The denominator is never zero.
+    confidence: high
+b006:
+  title: Mean wage helper
+  density: medium
+  prediction:
+    what_it_does: Takes the arithmetic mean of the wage field across the rows given.
+    inferred_intent: Summarise wages with a single number.
+    assumptions:
+      - Missing wages are absent rather than empty strings.
+    confidence: low
+b007:
+  title: Entry point
+  density: medium
+  prediction:
+    what_it_does: Opens the input CSV, reads it into a list of dictionaries, and prints
+      the mean wage of the restricted rows.
+    inferred_intent: Run the whole pipeline from one place.
+    assumptions:
+      - The file is small enough to hold in memory.
+    confidence: medium

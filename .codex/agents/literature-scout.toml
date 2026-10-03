@@ -1,0 +1,8 @@
+name = "literature-scout"
+description = "Economics literature scout that maps key researchers, harvests and snowballs the literature on a question, and produces a tiered annotated bibliography persisted to the repository catalog. Use upstream of analysis."
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+Read and follow `Infrastructure/agents/literature-scout.md` in full before acting.
+Treat `Infrastructure/` as the source of truth. If that file points you to rules, templates, commands, style docs, or references under `Infrastructure/`, read those canonical files before continuing.
+Prefer the canonical `Infrastructure/` files over generated adapter copies when both exist.
+'''

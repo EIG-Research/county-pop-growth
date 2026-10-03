@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "lens": "CE",
+  "target": "fixture-project",
+  "review_date": "2026-09-29",
+  "summary": "One high-confidence join defect changes the analytic sample; one suggestion.",
+  "files_reviewed": ["code/01_build_dataset.R", "code/02_analysis.R", "code/run_all.R"],
+  "findings": [
+    {
+      "check_id": "CE-JOIN",
+      "title": "State join is many-to-many and duplicates workers",
+      "severity": "HIGH",
+      "confidence": "high",
+      "file": "code/01_build_dataset.R",
+      "line": 72,
+      "end_line": 77,
+      "evidence": {
+        "claim": "The join duplicates worker rows because states.csv has two rows for S03.",
+        "found": "The join declares no relationship, and the row count rises after it.",
+        "quote": "workers_with_region <- inner_join(\n  workers_raw,\n  states_raw,\n  by = \"state_code\"\n)",
+        "verified_by": "Ran the build in a scratch copy: 500 rows before the join, 527 after.",
+        "command": "Rscript review-reports/_scratch/check_join.R"
+      },
+      "refutation": "Looked for a distinct() or a row-count check after the join; there is none.",
+      "explanation": "Duplicated workers inflate every weighted mean and the regression N.",
+      "fix": "Add relationship = \"many-to-one\" and unmatched = \"error\" to the join, and deduplicate states.csv."
+    },
+    {
+      "check_id": "CE-MISSING",
+      "title": "Mean age ignores missing ages silently",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "file": "code/02_analysis.R",
+      "line": 51,
+      "evidence": {
+        "claim": "na.rm = TRUE drops six missing ages without reporting them.",
+        "found": "mean(age, na.rm = TRUE) with no count of the dropped rows.",
+        "quote": "mean_age = mean(age, na.rm = TRUE)",
+        "verified_by": "the quoted lines"
+      },
+      "fix": "Report the number of missing ages beside the mean, or filter them explicitly first."
+    },
+    {
+      "check_id": "CE-EFFICIENCY",
+      "title": "Checkpoint read twice",
+      "severity": "SUGGESTION",
+      "confidence": "high",
+      "file": "code/02_analysis.R",
+      "line": 38,
+      "evidence": {
+        "claim": "The same .rds file is read in two places.",
+        "found": "Two readRDS calls on example_analysis_sample.rds.",
+        "quote": "readRDS(file.path(path_processed, \"example_analysis_sample.rds\"))",
+        "verified_by": "the quoted lines"
+      }
+    },
+    {
+      "check_id": "CE-SEED",
+      "title": "Is the bootstrap meant to be reproducible?",
+      "severity": "QUESTION",
+      "confidence": "low",
+      "file": "code/02_analysis.R",
+      "evidence": {
+        "claim": "No seed is set before the bootstrap in the helper the script sources.",
+        "found": "The helper was not in the reviewed files, so the seed could not be checked.",
+        "verified_by": "Not determinable from the reviewed files.",
+        "looked_in": ["code/02_analysis.R, section 5", "code/run_all.R"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# Fixture prediction set for proj_a code/sample.ado.
+b001:
+  title: File header
+  density: low
+  prediction:
+    what_it_does: Two comment lines saying the file is a synthetic fixture.
+    inferred_intent: Warn a reader that nothing in the file is a real analysis.
+    assumptions: []
+    confidence: high
+b002:
+  title: Prime-share program
+  density: high
+  prediction:
+    what_it_does: Defines an r-class program that marks the estimation sample, counts
+      observations aged 25 or older within it, and returns that count.
+    inferred_intent: Report how much of the sample is prime-age.
+    assumptions:
+      - The age variable exists in the caller's data.
+      - The lower bound is meant to be inclusive.
+    confidence: medium
+b003:
+  title: Caller note
+  density: low
+  prediction:
+    what_it_does: A trailing comment saying the caller must have loaded the extract.
+    inferred_intent: Document a precondition the code does not check.
+    assumptions:
+      - The precondition is not enforced anywhere else.
+    confidence: low

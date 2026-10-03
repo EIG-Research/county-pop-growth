@@ -1,0 +1,19 @@
+# >>> eig-template: managed by port_template.py; edit outside this block >>>
+# Secrets: .Renviron and .env files hold API keys and credentials.
+.Renviron
+.env
+.env.*
+!.env.example
+# Bytecode from the template's scripts.
+__pycache__/
+*.py[cod]
+# Review reports and board renders: regenerated on every run, never published.
+review-reports/
+**/review-reports/
+records/review_boards/*/renders/
+records/war_rooms/**/*.lock
+# Personal Claude settings, agent worktrees, and operator-local notes.
+.claude/settings.local.json
+.claude/worktrees/
+Infrastructure/local/
+# <<< eig-template <<<

@@ -1,0 +1,660 @@
+{
+  "meta": {
+    "name": "EIG Style Tokens",
+    "version": "2.0.0",
+    "generated_on": "2026-09-29",
+    "source_priority": [
+      "2022 Style Guide.pdf",
+      "2020 EIG Design Style Guide.docx"
+    ],
+    "description": "Canonical style token source for R, Stata, and Python implementations."
+  },
+  "status_definitions": {
+    "primary": "Preferred and authoritative. Use by default.",
+    "legacy": "Allowed only for legacy semantic comparability or when the 2022 guide is silent.",
+    "provisional": "Temporary value pending explicit design signoff."
+  },
+  "ambiguities": [
+    {
+      "id": "a-2022-black-swatch",
+      "issue": "Extracted text shows one black swatch as #00000 in the 2022 PDF.",
+      "provisional_resolution": "#000000",
+      "status": "provisional",
+      "requires_signoff": true,
+      "related_token_ids": [
+        "eig_black"
+      ]
+    },
+    {
+      "id": "a-2022-rgb-teal-900",
+      "issue": "The 2022 PDF (p.7, folio 06) lists RGB 4, 65, 64 for #024140, but that hex is 2, 65, 64.",
+      "source_value": {
+        "hex": "#024140",
+        "rgb": [
+          4,
+          65,
+          64
+        ]
+      },
+      "provisional_resolution": "Hex is authoritative; rgb is derived from it, and sync_tokens.py fails on a mismatch.",
+      "status": "provisional",
+      "requires_signoff": false,
+      "related_token_ids": [
+        "eig_teal_900"
+      ]
+    },
+    {
+      "id": "a-2022-rgb-green-700",
+      "issue": "The 2022 PDF (p.7, folio 06) lists RGB 26, 101, 77 for #19644d, but that hex is 25, 100, 77.",
+      "source_value": {
+        "hex": "#19644D",
+        "rgb": [
+          26,
+          101,
+          77
+        ]
+      },
+      "provisional_resolution": "Hex is authoritative; rgb is derived from it, and sync_tokens.py fails on a mismatch.",
+      "status": "provisional",
+      "requires_signoff": false,
+      "related_token_ids": [
+        "eig_green_700"
+      ]
+    },
+    {
+      "id": "a-2022-print-values-black-white",
+      "issue": "The 2022 PDF (p.7, folio 06) gives no RGB, CMYK, or PMS values for the black and white swatches; PMS numbers are printed without a C or U suffix.",
+      "provisional_resolution": "cmyk and pms are null for eig_black and eig_white; PMS values are kept exactly as printed.",
+      "status": "provisional",
+      "requires_signoff": false,
+      "related_token_ids": [
+        "eig_black",
+        "eig_white"
+      ]
+    },
+    {
+      "id": "a-neutrals",
+      "issue": "The 2022 PDF lists no neutrals besides black and white, but the themes need grid, rule, axis, and caption grays. eig-brand-guidelines.md named a Warm Gray (#A89F94) and a near-black (#1A1A1A) that appear in neither source guide; the rewritten doc drops both.",
+      "provisional_resolution": "Tokenize the four grays the themes already use under colors.neutrals, status provisional; do not adopt Warm Gray or #1A1A1A. tables.body.rule_color_hex is kept for existing readers and must equal the hex of rule_color_token.",
+      "status": "provisional",
+      "requires_signoff": true,
+      "related_token_ids": [
+        "eig_neutral_grid",
+        "eig_neutral_rule_light",
+        "eig_neutral_axis",
+        "eig_neutral_caption"
+      ]
+    },
+    {
+      "id": "a-series-order",
+      "issue": "The default series order puts eig_teal_900 next to eig_blue_800 (luminance contrast about 1.4:1), and eig_gold_600, which the previous figure doc used as the second-series and highlight color, has about 2.1:1 contrast on white, below the 3:1 WCAG floor for graphical objects.",
+      "provisional_resolution": "Keep the order. test_style.py reports adjacent-contrast and color-vision-deficiency warnings for it on every run; a reorder proposal is queued for the owner.",
+      "status": "provisional",
+      "requires_signoff": true,
+      "related_token_ids": [
+        "eig_teal_900",
+        "eig_blue_800",
+        "eig_gold_600"
+      ]
+    },
+    {
+      "id": "a-type-sizes",
+      "issue": "The 2022 guide gives no type sizes. The role sizes come from this template (labeled px before token version 2.0.0, but the themes always applied them as points). The 2020 guide specifies smaller sizes.",
+      "source_value": {
+        "guide": "2020 EIG Design Style Guide.docx",
+        "chart_title_pt": 9,
+        "chart_title_web_pt": 11,
+        "labels_legends_axes_pt": 8,
+        "citation_pt": 7,
+        "table_text_pt": 8,
+        "table_title_bar_pt": 11
+      },
+      "provisional_resolution": "Keep the template's point sizes (size_pt, the default a theme applies, within size_pt_range) with source template; the 2020 values are the owner's alternative.",
+      "status": "provisional",
+      "requires_signoff": true,
+      "related_token_ids": [
+        "chart_title",
+        "subtitle",
+        "axis_legend_table_body",
+        "notes_caption"
+      ]
+    },
+    {
+      "id": "a-legacy-families-scope",
+      "issue": "The 2020 guide specified Galaxie Polaris for charts and tables and Tiempos Text for report body text. For figures and tables the 2022 families supersede them; whether they still govern other EIG materials is not settled.",
+      "provisional_resolution": "Keep both as legacy_families with their 2020 scope. Themes never select them; docs describing them are rewritten in place rather than deleted.",
+      "status": "provisional",
+      "requires_signoff": true,
+      "related_token_ids": []
+    }
+  ],
+  "colors": {
+    "brand": [
+      {
+        "id": "eig_teal_900",
+        "hex": "#024140",
+        "rgb": [
+          2,
+          65,
+          64
+        ],
+        "cmyk": [
+          91,
+          53,
+          63,
+          48
+        ],
+        "pms": "3302",
+        "source": "2022",
+        "status": "primary",
+        "role": "Primary dark brand color"
+      },
+      {
+        "id": "eig_green_700",
+        "hex": "#19644D",
+        "rgb": [
+          25,
+          100,
+          77
+        ],
+        "cmyk": [
+          87,
+          51,
+          78,
+          12
+        ],
+        "pms": "7728",
+        "source": "2022",
+        "status": "primary",
+        "role": "Secondary dark green"
+      },
+      {
+        "id": "eig_green_500",
+        "hex": "#5E9C86",
+        "rgb": [
+          94,
+          156,
+          134
+        ],
+        "cmyk": [
+          66,
+          24,
+          52,
+          0
+        ],
+        "pms": "7724",
+        "source": "2022",
+        "status": "primary",
+        "role": "Secondary mid green"
+      },
+      {
+        "id": "eig_blue_800",
+        "hex": "#194F8B",
+        "rgb": [
+          25,
+          79,
+          139
+        ],
+        "cmyk": [
+          92,
+          72,
+          22,
+          0
+        ],
+        "pms": "7686",
+        "source": "2022",
+        "status": "primary",
+        "role": "Primary blue for emphasis"
+      },
+      {
+        "id": "eig_blue_200",
+        "hex": "#B3D6DD",
+        "rgb": [
+          179,
+          214,
+          221
+        ],
+        "cmyk": [
+          34,
+          6,
+          13,
+          0
+        ],
+        "pms": "7457",
+        "source": "2022",
+        "status": "primary",
+        "role": "Light blue tint"
+      },
+      {
+        "id": "eig_cream_100",
+        "hex": "#FEECD6",
+        "rgb": [
+          254,
+          236,
+          214
+        ],
+        "cmyk": [
+          0,
+          10,
+          18,
+          0
+        ],
+        "pms": "7506",
+        "source": "2022",
+        "status": "primary",
+        "role": "Warm neutral"
+      },
+      {
+        "id": "eig_purple_800",
+        "hex": "#39274F",
+        "rgb": [
+          57,
+          39,
+          79
+        ],
+        "cmyk": [
+          89,
+          100,
+          56,
+          13
+        ],
+        "pms": "669",
+        "source": "2022",
+        "status": "primary",
+        "role": "Accent color"
+      },
+      {
+        "id": "eig_gold_600",
+        "hex": "#E1AD28",
+        "rgb": [
+          225,
+          173,
+          40
+        ],
+        "cmyk": [
+          13,
+          36,
+          89,
+          0
+        ],
+        "pms": "7555",
+        "source": "2022",
+        "status": "primary",
+        "role": "Accent color"
+      },
+      {
+        "id": "eig_cyan_700",
+        "hex": "#176F96",
+        "rgb": [
+          23,
+          111,
+          150
+        ],
+        "cmyk": [
+          85,
+          50,
+          29,
+          0
+        ],
+        "pms": "7705",
+        "source": "2022",
+        "status": "primary",
+        "role": "Accent color"
+      },
+      {
+        "id": "eig_tan_500",
+        "hex": "#D6936F",
+        "rgb": [
+          214,
+          147,
+          111
+        ],
+        "cmyk": [
+          0,
+          50,
+          85,
+          10
+        ],
+        "pms": "471",
+        "source": "2022",
+        "status": "primary",
+        "role": "Accent color"
+      },
+      {
+        "id": "eig_tan_300",
+        "hex": "#F0B799",
+        "rgb": [
+          240,
+          183,
+          153
+        ],
+        "cmyk": [
+          4,
+          36,
+          37,
+          0
+        ],
+        "pms": "488",
+        "source": "2022",
+        "status": "primary",
+        "role": "Accent tint"
+      },
+      {
+        "id": "eig_black",
+        "hex": "#000000",
+        "rgb": [
+          0,
+          0,
+          0
+        ],
+        "cmyk": null,
+        "pms": null,
+        "source": "2022",
+        "status": "provisional",
+        "role": "Text and stroke default"
+      },
+      {
+        "id": "eig_white",
+        "hex": "#FFFFFF",
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "cmyk": null,
+        "pms": null,
+        "source": "2022",
+        "status": "primary",
+        "role": "Background and reversed text"
+      }
+    ],
+    "neutrals": [
+      {
+        "id": "eig_neutral_grid",
+        "hex": "#D9D9D9",
+        "rgb": [
+          217,
+          217,
+          217
+        ],
+        "source": "template",
+        "status": "provisional",
+        "role": "Gridlines and table header/edge rules"
+      },
+      {
+        "id": "eig_neutral_rule_light",
+        "hex": "#E6E6E6",
+        "rgb": [
+          230,
+          230,
+          230
+        ],
+        "source": "template",
+        "status": "provisional",
+        "role": "Table body row rules"
+      },
+      {
+        "id": "eig_neutral_axis",
+        "hex": "#CFCFCF",
+        "rgb": [
+          207,
+          207,
+          207
+        ],
+        "source": "template",
+        "status": "provisional",
+        "role": "Axis lines"
+      },
+      {
+        "id": "eig_neutral_caption",
+        "hex": "#444444",
+        "rgb": [
+          68,
+          68,
+          68
+        ],
+        "source": "template",
+        "status": "provisional",
+        "role": "Caption, note, and source text"
+      }
+    ],
+    "discrete_order": {
+      "token_ids": [
+        "eig_teal_900",
+        "eig_blue_800",
+        "eig_green_500",
+        "eig_gold_600",
+        "eig_purple_800",
+        "eig_cyan_700",
+        "eig_tan_500"
+      ],
+      "source": "template",
+      "status": "primary",
+      "role": "Default categorical series order; themes take the first n."
+    },
+    "sequential": [
+      {
+        "id": "eig_seq_blue_5",
+        "source": "2020",
+        "status": "legacy",
+        "entries": [
+          "#164C87",
+          "#236BB7",
+          "#419EF1",
+          "#79C5FD",
+          "#C1DCFD"
+        ]
+      },
+      {
+        "id": "eig_seq_red_5",
+        "source": "2020",
+        "status": "legacy",
+        "entries": [
+          "#97310E",
+          "#D34917",
+          "#F97D1E",
+          "#FBA94F",
+          "#FDD7A8"
+        ]
+      }
+    ],
+    "legacy_semantic_sets": [
+      {
+        "set_id": "dci_quintile",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "distressed": "#97310E",
+          "at_risk": "#F97D1E",
+          "mid_tier": "#9FD2C0",
+          "comfortable": "#419EF1",
+          "prosperous": "#164C87"
+        }
+      },
+      {
+        "set_id": "educ_attainment",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "no_hs_diploma": "#F97D1E",
+          "hs_diploma": "#FDD7A8",
+          "some_college": "#C1DCFD",
+          "bachelors_plus": "#164C87"
+        }
+      },
+      {
+        "set_id": "urban_rural",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "suburban": "#254F85",
+          "urban": "#79C5FD",
+          "small_town": "#008080",
+          "rural": "#274653"
+        }
+      },
+      {
+        "set_id": "occupation",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "professional": "#FFC0CB",
+          "sales": "#79C5FD",
+          "services": "#008080",
+          "production": "#776FD6",
+          "natural_resources_and_construction": "#FBA94F"
+        }
+      },
+      {
+        "set_id": "race",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "black": "#FBA94F",
+          "white": "#79C5FD",
+          "hispanic": "#776FD6",
+          "asian": "#236BB7",
+          "native_american": "#DD88CF"
+        }
+      },
+      {
+        "set_id": "two_tone",
+        "source": "2020",
+        "status": "legacy",
+        "entries": {
+          "dark_teal": "#008080",
+          "light_blue": "#79C5FD"
+        }
+      }
+    ]
+  },
+  "typography": {
+    "headline": {
+      "primary_family": "Source Serif Pro",
+      "accept_as_primary": [
+        "Source Serif 4"
+      ],
+      "fallback_stack": [
+        "Source Serif 3",
+        "Georgia",
+        "Times New Roman",
+        "serif"
+      ],
+      "source": "2022",
+      "status": "primary"
+    },
+    "body": {
+      "primary_family": "Open Sans",
+      "accept_as_primary": [
+        "OpenSans"
+      ],
+      "fallback_stack": [
+        "Arial",
+        "Helvetica Neue",
+        "Helvetica",
+        "sans-serif"
+      ],
+      "source": "2022",
+      "status": "primary"
+    },
+    "legacy_families": [
+      {
+        "family": "Galaxie Polaris",
+        "source": "2020",
+        "status": "legacy",
+        "scope_2020": "2020 guide: chart and map titles, labels, legends, and tables.",
+        "superseded_for": "figures and tables, by the 2022 headline and body families"
+      },
+      {
+        "family": "Tiempos Text",
+        "source": "2020",
+        "status": "legacy",
+        "scope_2020": "2020 guide: report body text and section headers.",
+        "superseded_for": "figures and tables, by the 2022 headline and body families"
+      }
+    ],
+    "roles": {
+      "chart_title": {
+        "family": "Source Serif Pro",
+        "weight": "semibold",
+        "size_pt": 15,
+        "size_pt_range": [
+          14,
+          16
+        ],
+        "source": "template",
+        "status": "primary"
+      },
+      "subtitle": {
+        "family": "Open Sans",
+        "weight": "semibold",
+        "size_pt": 11,
+        "size_pt_range": [
+          11,
+          12
+        ],
+        "source": "template",
+        "status": "primary"
+      },
+      "axis_legend_table_body": {
+        "family": "Open Sans",
+        "weight": "regular",
+        "size_pt": 9,
+        "size_pt_range": [
+          9,
+          10
+        ],
+        "source": "template",
+        "status": "primary"
+      },
+      "notes_caption": {
+        "family": "Open Sans",
+        "weight": "regular",
+        "size_pt": 8,
+        "source": "template",
+        "status": "primary"
+      }
+    }
+  },
+  "sizing": {
+    "figure_default": {
+      "width_in": 6.5,
+      "height_in": 3.5,
+      "source": "2020",
+      "status": "legacy"
+    },
+    "text_floor_pt": {
+      "print": 7,
+      "screen": 7.5,
+      "source": "2020",
+      "status": "primary",
+      "note": "Smallest text in a finished figure. Screen is 10px at 96 dpi."
+    }
+  },
+  "tables": {
+    "header": {
+      "background_token": "eig_teal_900",
+      "text_token": "eig_white",
+      "font_role": "subtitle",
+      "source": "2020+2022",
+      "status": "primary"
+    },
+    "body": {
+      "font_role": "axis_legend_table_body",
+      "horizontal_rules_only": true,
+      "rule_color_hex": "#D9D9D9",
+      "rule_color_token": "eig_neutral_grid",
+      "row_rule_color_token": "eig_neutral_rule_light",
+      "source": "2020+2022",
+      "status": "primary"
+    }
+  },
+  "policies": {
+    "legacy_palette_decision_rule": [
+      "Use primary (2022) palette by default for all new outputs.",
+      "Use legacy semantic sets only when preserving longitudinal comparability with prior published EIG series or contractual client requirements.",
+      "If legacy semantic sets are used, annotate output metadata with `legacy_palette_justification` and `legacy_set_id`.",
+      "Do not mix primary categorical palette and legacy semantic set within one legend unless dual-encoding is explicitly required and documented."
+    ]
+  }
+}

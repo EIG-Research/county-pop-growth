@@ -1,0 +1,236 @@
+# Key for the review-fleet evaluation fixture (build_fixture.py builds it; review_eval.py
+# scores against it). Each defect and decoy is keyed by its patch file's stem.
+#
+#   lens            owning lens (Infrastructure/rules/review-contract.md, section 6)
+#   family          the owning check_id (Infrastructure/templates/review-findings.schema.json)
+#   severity        expected severity under the contract
+#   owner_judgment  true where the severity rests on a draft default awaiting owner sign-off
+#                   (companion plan O1-O8); scored apart from the pass/fail set
+#   locations       file and anchor text; each anchor occurs exactly once in the built fixture
+#   also            check families of other lenses that may legitimately report the same
+#                   spot (a consequence, not a false positive); they do not count as recall
+#
+# Numbers in anchors are the fixture's own pipeline outputs. After a change to the worked
+# example, rebuild, rerun its pipeline, and refresh the patches whose anchors moved.
+
+defects:
+  - id: ce-01-na-rm-missing-ages
+    lens: CE
+    family: CE-MISSING
+    severity: MEDIUM
+    owner_judgment: false
+    summary: The mean age of "the 500 workers read" drops the six missing ages via na.rm = TRUE.
+    locations:
+      - {file: code/01_build_dataset.R, anchor: "mean(workers_raw$age, na.rm = TRUE)"}
+      - {file: drafts/example_note.md, anchor: "The 500 workers read from the raw file"}
+    also: [CC-SAMPLE, DN-VALUE]
+  - id: ce-02-zero-padded-fips
+    lens: CE
+    family: CE-TYPE
+    severity: HIGH
+    owner_judgment: false
+    summary: Zero-padded FIPS read as integers, so "01" to "09" become "1" to "9" and never match.
+    locations:
+      - {file: code/04_min_wage.R, anchor: "state_fips = col_integer()"}
+      - {file: code/04_min_wage.R, anchor: "mutate(state_fips = as.character(state_fips))"}
+    also: [CE-JOIN]
+  - id: ce-03-many-to-many-join
+    lens: CE
+    family: CE-JOIN
+    severity: HIGH
+    owner_judgment: false
+    summary: The minimum wage is joined by state only, matching every worker to both years.
+    locations:
+      - {file: code/04_min_wage.R, anchor: "relationship = \"many-to-many\""}
+  - id: ce-04-filter-drops-unmatched
+    lens: CE
+    family: CE-MISSING
+    severity: HIGH
+    owner_judgment: false
+    summary: >-
+      The NA guard is gone and state 20 has no minimum-wage rows, so after the left join the
+      filter silently drops its workers; present on its own, whatever the FIPS read does.
+    locations:
+      - {file: code/04_min_wage.R, anchor: "filter(hourly_wage < min_wage)"}
+  - id: mr-01-unweighted-population-mean
+    lens: MR
+    family: MR-WEIGHTS
+    severity: HIGH
+    owner_judgment: false
+    summary: The mean wage by year is unweighted, yet the note reports it for the population.
+    locations:
+      - {file: code/02_analysis.R, anchor: "mean_wage = mean(hourly_wage)"}
+  - id: mr-02-household-person-weight
+    lens: MR
+    family: MR-WEIGHTS
+    severity: HIGH
+    owner_judgment: false
+    summary: Household income is weighted with person_weight instead of household_weight.
+    locations:
+      - {file: code/05_households.R, anchor: "weighted.mean(household_income, person_weight)"}
+  - id: mr-03-nominal-growth-called-real
+    lens: MR
+    family: MR-DEFLATE
+    severity: HIGH
+    owner_judgment: false
+    summary: Growth uses nominal means; the note calls it real (real growth is about -0.9 percent).
+    locations:
+      - {file: code/02_analysis.R, anchor: "wage_by_year$mean_wage[2] / wage_by_year$mean_wage[1]"}
+      - {file: drafts/example_note.md, anchor: "Real mean hourly wages grew 3.2 percent"}
+    also: [CE-LOGIC, CC-VARIABLE, CC-INTERPRET, DN-ARITH, DN-VALUE]
+  - id: mr-04-owner-staggered-twfe
+    lens: MR
+    family: MR-DESIGN
+    severity: HIGH
+    owner_judgment: true
+    summary: Staggered adoption with effects growing over time, estimated by two-way fixed effects (O1).
+    locations:
+      - {file: code/06_policy_panel.R, anchor: "log_wage ~ treated | state_code + year"}
+  - id: mr-05-owner-few-treated-clusters
+    lens: MR
+    family: MR-INFERENCE
+    severity: HIGH
+    owner_judgment: true
+    summary: Four treated states with conventional cluster-robust errors (O3).
+    locations:
+      - {file: code/06_policy_panel.R, anchor: "vcov = ~state_code"}
+      - {file: code/06_policy_panel.R, anchor: "adoption_year <- c(S05 = 2017L"}
+  - id: dn-01-note-vs-table
+    lens: DN
+    family: DN-VALUE
+    severity: HIGH
+    owner_judgment: false
+    summary: The note says $18.32; example_mean_wage_by_region.csv says 18.23.
+    locations:
+      - {file: drafts/example_note.md, anchor: "$18.32"}
+    also: [DN-INTERNAL]
+  - id: dn-02-nobs-after-singletons
+    lens: DN
+    family: DN-VALUE
+    severity: MEDIUM
+    owner_judgment: false
+    summary: The note says 303 workers; fixest dropped 22 singletons and used 281.
+    locations:
+      - {file: drafts/example_note.md, anchor: "on the same 303 workers"}
+    also: [DN-INTERNAL, CC-SAMPLE]
+  - id: dn-03-qmd-rounding
+    lens: DN
+    family: DN-ROUND
+    severity: LOW
+    owner_judgment: false
+    summary: The brief prints the mean wage as $18.2, while its table and the note give 18.23.
+    locations:
+      - {file: drafts/example_brief.qmd, anchor: "round(all_regions_row$weighted_mean_wage, 1)"}
+    also: [DN-INTERNAL]
+  - id: dn-04-log-points-as-percent
+    lens: DN
+    family: DN-ARITH
+    severity: MEDIUM
+    owner_judgment: false
+    summary: A coefficient of -0.1879 log points is reported as 19% less; exp(-0.1879) - 1 is about -17%.
+    locations:
+      - {file: drafts/example_note.md, anchor: "about 19% less"}
+    also: [CC-INTERPRET]
+  - id: cc-01-undisclosed-age-filter
+    lens: CC
+    family: CC-UNDISCLOSED
+    severity: MEDIUM
+    owner_judgment: false
+    summary: The minimum-wage share drops workers over 50; the note says "prime-age workers".
+    locations:
+      - {file: code/04_min_wage.R, anchor: "filter(analysis_sample, age <= 50)"}
+      - {file: drafts/example_note.md, anchor: "were paid below their state's minimum wage"}
+    also: [CC-SAMPLE, MR-SAMPLE]
+  - id: cc-02-causal-wording
+    lens: CC
+    family: CC-CAUSAL
+    severity: HIGH
+    owner_judgment: false
+    summary: A descriptive regression gap is attributed to employers' treatment of women.
+    locations:
+      - {file: drafts/example_note.md, anchor: "employers pay women less because they"}
+  - id: cc-03-prime-age-called-all
+    lens: CC
+    family: CC-SAMPLE
+    severity: MEDIUM
+    owner_judgment: false
+    summary: The brief describes the prime-age sample as all workers.
+    locations:
+      - {file: drafts/example_brief.qmd, anchor: "Among all"}
+  - id: cc-04-percent-vs-points
+    lens: CC
+    family: CC-INTERPRET
+    severity: MEDIUM
+    owner_judgment: false
+    summary: A 12.3-point fall in a percentage is reported as a decline of 12.3 percent.
+    locations:
+      - {file: drafts/example_note.md, anchor: "a decline of 12.3 percent."}
+    also: [DN-ARITH]
+  - id: as-01-fabricated-citation
+    lens: AS
+    family: AS-CITATION
+    severity: HIGH
+    owner_judgment: false
+    summary: Hartwell and Okonkwo (2019) and the Journal of Applied Wage Studies do not exist.
+    locations:
+      - {file: drafts/example_note.md, anchor: "Hartwell and Okonkwo (2019)"}
+  - id: as-02-wrong-bls-figure
+    lens: AS
+    family: AS-EXTERNAL
+    severity: HIGH
+    owner_judgment: false
+    summary: >-
+      The note gives 93 percent; BLS's Highlights of Women's Earnings in 2023 reports a ratio in
+      the low-to-mid 80s (confirm the exact figure against the report when scoring by hand).
+    locations:
+      - {file: drafts/example_note.md, anchor: "93 percent of"}
+  - id: as-03-misattributed-finding
+    lens: AS
+    family: AS-CITATION
+    severity: HIGH
+    owner_judgment: false
+    summary: Blau and Kahn (2017) document a narrowed but persistent gap, not a closed one.
+    locations:
+      - {file: drafts/example_note.md, anchor: "had closed by 2010"}
+  - id: as-04-comment-says-median
+    lens: AS
+    family: AS-COMMENT
+    severity: LOW
+    owner_judgment: false
+    summary: The comment says median household income; the code computes a weighted mean.
+    locations:
+      - {file: code/05_households.R, anchor: "Median household income by region"}
+
+decoys:
+  - id: 01-justified-weights
+    lens: MR
+    family: MR-WEIGHTS
+    severity: NONE
+    summary: The weighted regression states why it is weighted.
+    locations:
+      - {file: code/02_analysis.R, anchor: "The weights make the estimate describe the population"}
+  - id: 02-weighted-vs-unweighted
+    lens: MR
+    family: MR-WEIGHTS
+    severity: NONE
+    summary: The unweighted estimate is computed and reported beside the weighted one.
+    locations:
+      - {file: code/02_analysis.R, anchor: "wage_model_unweighted <- feols("}
+      - {file: drafts/example_note.md, anchor: "Without weights the main estimate is -0.1670"}
+  - id: 03-explicit-vcov
+    lens: MR
+    family: MR-INFERENCE
+    severity: NONE
+    summary: An individual-level regression with explicit heteroskedasticity-robust errors; no cluster sampling, so no clustering is needed (O3).
+    locations:
+      - {file: code/02_analysis.R, anchor: "vcov = \"hetero\""}
+
+control:
+  - id: control-disclosed-small-clusters
+    lens: MR
+    family: MR-INFERENCE
+    max_severity: LOW
+    summary: The unpatched example clusters by 20 states and discloses the limitation (O3).
+    locations:
+      - {file: code/02_analysis.R, anchor: "vcov = ~state_code"}
+      - {file: drafts/example_note.md, anchor: "With only 20 state clusters"}

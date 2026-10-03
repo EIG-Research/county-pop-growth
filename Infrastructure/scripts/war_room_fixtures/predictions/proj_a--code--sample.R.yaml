@@ -1,0 +1,79 @@
+# Fixture prediction set for proj_a code/sample.R.
+# Synthetic: these are not an agent's readings of real code. Confidence is distributed
+# honestly under WR-P6 -- at least one low, and not every block is high.
+b001:
+  title: File header
+  density: low
+  prediction:
+    what_it_does: Two comment lines saying the file is a synthetic fixture.
+    inferred_intent: Warn a reader that nothing in the file is a real analysis.
+    assumptions: []
+    confidence: high
+b002:
+  title: Library loads
+  density: low
+  prediction:
+    what_it_does: Attaches dplyr and readr.
+    inferred_intent: Make the pipe and the CSV reader available.
+    assumptions:
+      - Both packages are installed in the calling environment.
+    confidence: high
+b003:
+  title: Read the person-level extract
+  density: medium
+  prediction:
+    what_it_does: Reads a CSV from a relative path into a data frame called raw.
+    inferred_intent: Load the input extract for the rest of the script.
+    assumptions:
+      - The working directory is the project root, so the relative path resolves.
+      - Column types are whatever the reader guesses from the first rows.
+    confidence: medium
+b004:
+  title: Age restriction on the analysis sample
+  density: high
+  prediction:
+    what_it_does: Keeps rows where age is 25 or older and labels them as prime.
+    inferred_intent: Restrict the sample to prime-age adults.
+    assumptions:
+      - Age is measured in completed years, not months.
+      - The lower bound is meant to be inclusive.
+      - No upper bound is wanted.
+    confidence: medium
+b005:
+  title: Wage share helper
+  density: low
+  prediction:
+    what_it_does: Defines a function returning one number divided by another.
+    inferred_intent: Express a wage total as a share of some other total.
+    assumptions:
+      - The denominator is never zero.
+    confidence: high
+b006:
+  title: Mean wage by age group
+  density: medium
+  prediction:
+    what_it_does: Defines a function that groups by age_group and takes a mean wage,
+      dropping missing values.
+    inferred_intent: Produce one mean wage per age group.
+    assumptions:
+      - Dropping missing wages is intended rather than an oversight.
+      - The wage column exists and is numeric.
+    confidence: low
+b007:
+  title: Build the summary table
+  density: medium
+  prediction:
+    what_it_does: Calls the summary helper on the restricted sample.
+    inferred_intent: Produce the one table this script exists to produce.
+    assumptions:
+      - The restricted sample is the intended input, not the raw one.
+    confidence: high
+b008:
+  title: Write the summary table
+  density: low
+  prediction:
+    what_it_does: Writes the summary table to a CSV under the output directory.
+    inferred_intent: Persist the result for downstream use.
+    assumptions:
+      - The output directory already exists.
+    confidence: medium

@@ -1,0 +1,29 @@
+# An individual-level regression with explicit heteroskedasticity-robust errors.
+
+--- a/code/02_analysis.R
++++ b/code/02_analysis.R
+@@ -152,6 +152,24 @@
+ write_csv(
+   robustness_table,
+   file.path(path_tables, "example_wage_model_robustness.csv")
++)
++
++# 9c) The age slope across individual workers; assignment is individual, so
++#     heteroskedasticity-robust errors, not clustered ones
++wage_age_model <- feols(
++  log_hourly_wage ~ age,
++  data = analysis_sample,
++  weights = ~person_weight,
++  vcov = "hetero"
++)
++
++write_csv(
++  data.frame(
++    term = "age",
++    estimate = round(unname(coef(wage_age_model)[["age"]]), 4L),
++    std_error = round(unname(se(wage_age_model)[["age"]]), 4L)
++  ),
++  file.path(path_tables, "example_wage_age_slope.csv")
+ )
+ 
+ # 10) A synthetic price index for the example (2022 = 100), used to state

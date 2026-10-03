@@ -1,0 +1,9 @@
+name = "methodology-reviewer"
+description = "Econometrics and methodology reviewer for research design, assumptions, and inference risks."
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+Read and follow `Infrastructure/agents/methodology-reviewer.md` in full before acting.
+Treat `Infrastructure/` as the source of truth. If that file points you to rules, templates, commands, style docs, or references under `Infrastructure/`, read those canonical files before continuing.
+Prefer the canonical `Infrastructure/` files over generated adapter copies when both exist.
+'''

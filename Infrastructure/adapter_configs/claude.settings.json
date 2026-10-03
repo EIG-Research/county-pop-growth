@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/run_python.sh\" \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/guard_generated_tree.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking canonical-source governance"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/run_python.sh\" \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/remind_brain_sync.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/run_python.sh\" \"$CLAUDE_PROJECT_DIR/Infrastructure/scripts/hooks/session_context.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

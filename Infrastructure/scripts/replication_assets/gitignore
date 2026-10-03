@@ -1,0 +1,33 @@
+# .gitignore for the public replication repository.
+# Keeps raw/large/derived data and local cruft out of version control.
+
+# Raw and large data inputs (document how to obtain them in DATA.md instead).
+data/raw/
+*.dta
+*.sas7bdat
+*.parquet
+*.rds
+*.RData
+
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*~
+.vscode/
+.idea/
+
+# Logs and scratch
+output/logs/
+*.log

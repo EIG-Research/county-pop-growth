@@ -1,0 +1,692 @@
+# Scaffold, not a defect: new example scripts, data, and prose the defects build on. Its numbers are the fixture's final outputs.
+
+--- a/code/01_build_dataset.R
++++ b/code/01_build_dataset.R
+@@ -63,6 +63,19 @@
+ message("Read ", nrow(workers_raw), " worker rows and ", nrow(states_raw),
+         " state rows from data/example/")
+ 
++# 4b) Profile the workers read, counting those with a recorded age
++sample_profile <- data.frame(
++  workers_read_int = nrow(workers_raw),
++  workers_with_age_int = sum(!is.na(workers_raw$age)),
++  mean_age = round(mean(workers_raw$age[!is.na(workers_raw$age)]), 1L)
++)
++
++dir.create(here::here("output", "tables"), recursive = TRUE, showWarnings = FALSE)
++write_csv(
++  sample_profile,
++  here::here("output", "tables", "example_sample_profile.csv")
++)
++
+ ################################################################################
+ ###                          4. Join state regions                           ###
+ ################################################################################
+--- a/code/02_analysis.R
++++ b/code/02_analysis.R
+@@ -114,5 +114,58 @@
+   file.path(path_tables, "example_wage_model_coefficients.csv")
+ )
+ 
++################################################################################
++###                      6. Robustness and wage growth                       ###
++################################################################################
++
++# 9) Add region-by-age fixed effects; fixest drops singleton cells, so the
++#    table records the observations the model used
++wage_model_age_fe <- feols(
++  log_hourly_wage ~ female_flag | state_code + year + region^age,
++  data = analysis_sample,
++  weights = ~person_weight,
++  vcov = ~state_code
++)
++
++robustness_table <- data.frame(
++  model = "region-by-age fixed effects",
++  estimate = round(unname(coef(wage_model_age_fe)[["female_flagTRUE"]]), 4L),
++  std_error = round(unname(se(wage_model_age_fe)[["female_flagTRUE"]]), 4L),
++  observations_int = nobs(wage_model_age_fe)
++)
++
++write_csv(
++  robustness_table,
++  file.path(path_tables, "example_wage_model_robustness.csv")
++)
++
++# 10) A synthetic price index for the example (2022 = 100), used to state
++#     2022 wages in 2023 dollars
++price_index <- c("2022" = 100, "2023" = 104.1)
++
++# 11) Mean wage by year, then in 2023 dollars
++wage_by_year <- analysis_sample |>
++  group_by(year) |>
++  summarise(
++    workers_int = n(),
++    mean_wage = weighted.mean(hourly_wage, person_weight),
++    .groups = "drop"
++  ) |>
++  mutate(
++    mean_real_wage = mean_wage * price_index[["2023"]] /
++      price_index[as.character(year)]
++  )
++
++# 12) Real wage growth from 2022 to 2023, in percent
++real_wage_growth_pct <- round(
++  100 * (wage_by_year$mean_real_wage[2] / wage_by_year$mean_real_wage[1] - 1),
++  1L
++)
++
++write_csv(
++  mutate(wage_by_year, real_wage_growth_pct = real_wage_growth_pct),
++  file.path(path_tables, "example_wage_by_year.csv")
++)
++
+ message("Wrote example_mean_wage_by_region, example_wage_model, and ",
+         "example_wage_model_coefficients to output/tables/")
+--- /dev/null
++++ b/code/04_min_wage.R
+@@ -0,0 +1,101 @@
++# 04_min_wage -- EXAMPLE: replace. Share paid below the state minimum wage
++# Author - *Insert Human Author Here*
++# research title - see PROJECT.md
++# research question - see PROJECT.md
++
++rm(list = ls())
++options(scipen = 999)
++set.seed(42)
++
++# This worked example compares each worker's wage with a synthetic state minimum
++# wage (data/example/min_wage.csv) and writes the share paid below it by year.
++
++################################################################################
++###                             1. Load packages                             ###
++################################################################################
++
++# 1) Attach the packages this script uses
++library(dplyr)
++library(readr)
++
++################################################################################
++###                               2. Set paths                               ###
++################################################################################
++
++# 2) Stop unless this script sits at code/04_min_wage.R in the project
++here::i_am("code/04_min_wage.R")
++
++path_example <- here::here("data", "example")
++path_processed <- here::here("data", "processed")
++path_tables <- here::here("output", "tables")
++dir.create(path_tables, recursive = TRUE, showWarnings = FALSE)
++
++################################################################################
++###                              3. Read inputs                              ###
++################################################################################
++
++# 3) Read the analytic sample, the state FIPS crosswalk, and the minimum wages
++analysis_sample <- readRDS(
++  file.path(path_processed, "example_analysis_sample.rds")
++)
++
++state_fips <- read_csv(
++  file.path(path_example, "state_fips.csv"),
++  col_types = cols(
++    state_code = col_character(),
++    state_fips = col_character()
++  )
++)
++
++min_wage <- read_csv(
++  file.path(path_example, "min_wage.csv"),
++  col_types = cols(
++    state_fips = col_character(),
++    min_wage_year = col_integer(),
++    min_wage = col_double()
++  )
++)
++
++################################################################################
++###                        4. Attach the minimum wage                        ###
++################################################################################
++
++# 4) Keep the workers the minimum-wage comparison covers
++min_wage_sample <- analysis_sample
++
++# 5) Attach each worker's state and year minimum wage: one row per worker
++workers_min_wage <- min_wage_sample |>
++  left_join(state_fips, by = "state_code", relationship = "many-to-one") |>
++  left_join(
++    min_wage,
++    by = c("state_fips", "year" = "min_wage_year"),
++    relationship = "many-to-one"
++  )
++
++# 6) Stop if any worker has no minimum wage, so the share cannot drop them
++if (anyNA(workers_min_wage$min_wage)) {
++  stop("Workers without a state minimum wage; check the FIPS join")
++}
++
++################################################################################
++###                     5. Share below the minimum wage                      ###
++################################################################################
++
++# 7) Count workers paid below their state's minimum, by year
++below_minimum <- workers_min_wage |>
++  filter(hourly_wage < min_wage) |>
++  count(year, name = "below_minimum_int")
++
++min_wage_share <- count(min_wage_sample, year, name = "workers_int") |>
++  left_join(below_minimum, by = "year") |>
++  mutate(
++    below_minimum_int = coalesce(below_minimum_int, 0L),
++    share_below_pct = round(100 * below_minimum_int / workers_int, 1L)
++  )
++
++write_csv(
++  min_wage_share,
++  file.path(path_tables, "example_min_wage_share.csv")
++)
++
++message("Wrote example_min_wage_share to output/tables/")
+--- /dev/null
++++ b/code/05_households.R
+@@ -0,0 +1,83 @@
++# 05_households -- EXAMPLE: replace. Mean household income by region
++# Author - *Insert Human Author Here*
++# research title - see PROJECT.md
++# research question - see PROJECT.md
++
++rm(list = ls())
++options(scipen = 999)
++set.seed(42)
++
++# This worked example summarizes the synthetic household file,
++# data/example/households.csv, by region.
++
++################################################################################
++###                             1. Load packages                             ###
++################################################################################
++
++# 1) Attach the packages this script uses
++library(dplyr)
++library(readr)
++
++################################################################################
++###                               2. Set paths                               ###
++################################################################################
++
++# 2) Stop unless this script sits at code/05_households.R in the project
++here::i_am("code/05_households.R")
++
++path_example <- here::here("data", "example")
++path_tables <- here::here("output", "tables")
++dir.create(path_tables, recursive = TRUE, showWarnings = FALSE)
++
++################################################################################
++###                              3. Read inputs                              ###
++################################################################################
++
++# 3) Read the households and the state regions with explicit column types
++households <- read_csv(
++  file.path(path_example, "households.csv"),
++  col_types = cols(
++    household_id = col_integer(),
++    state_code = col_character(),
++    year = col_integer(),
++    household_income = col_double(),
++    household_weight = col_double(),
++    person_weight = col_double()
++  )
++)
++
++states <- read_csv(
++  file.path(path_example, "states.csv"),
++  col_types = cols(
++    state_code = col_character(),
++    region = col_character()
++  )
++)
++
++################################################################################
++###                           4. Income by region                            ###
++################################################################################
++
++# 4) Mean household income by region, weighted to the population
++income_by_region <- households |>
++  inner_join(
++    states,
++    by = "state_code",
++    relationship = "many-to-one",
++    unmatched = "error"
++  ) |>
++  group_by(region) |>
++  summarise(
++    households_int = n(),
++    mean_household_income = round(
++      weighted.mean(household_income, household_weight), -2L
++    ),
++    .groups = "drop"
++  )
++
++write_csv(
++  income_by_region,
++  file.path(path_tables, "example_household_income_by_region.csv")
++)
++
++message("Wrote example_household_income_by_region to output/tables/")
+--- /dev/null
++++ b/code/06_policy_panel.R
+@@ -0,0 +1,84 @@
++# 06_policy_panel -- EXAMPLE: replace. A state wage policy adopted in different years
++# Author - *Insert Human Author Here*
++# research title - see PROJECT.md
++# research question - see PROJECT.md
++
++rm(list = ls())
++options(scipen = 999)
++set.seed(42)
++
++# This worked example builds a synthetic state-year panel, seeded so every run is
++# identical, and estimates the effect of a wage policy that states adopted in
++# different years.
++
++################################################################################
++###                             1. Load packages                             ###
++################################################################################
++
++# 1) Attach the packages this script uses
++library(dplyr)
++library(readr)
++library(fixest)
++
++################################################################################
++###                               2. Set paths                               ###
++################################################################################
++
++# 2) Stop unless this script sits at code/06_policy_panel.R in the project
++here::i_am("code/06_policy_panel.R")
++
++path_tables <- here::here("output", "tables")
++dir.create(path_tables, recursive = TRUE, showWarnings = FALSE)
++
++################################################################################
++###                            3. Build the panel                            ###
++################################################################################
++
++# 3) The year each treated state adopted the policy; other states never do
++adoption_year <- c(
++  S02 = 2017L, S05 = 2017L, S07 = 2018L, S10 = 2019L,
++  S12 = 2019L, S15 = 2020L, S17 = 2021L, S19 = 2021L
++)
++
++# 4) One row per state and year; the effect grows with years since adoption
++set.seed(20260929)
++policy_panel <- expand.grid(
++  state_code = sprintf("S%02d", 1:20),
++  year = 2015:2023,
++  stringsAsFactors = FALSE
++) |>
++  mutate(
++    adoption_year = coalesce(unname(adoption_year[state_code]), 10000L),
++    treated = year >= adoption_year,
++    log_wage = 2.8 + 0.01 * (year - 2015L) +
++      if_else(treated, 0.015 * (year - adoption_year + 1L), 0) +
++      rnorm(n(), mean = 0, sd = 0.02)
++  )
++
++################################################################################
++###                          4. Estimate the effect                          ###
++################################################################################
++
++# 5) Estimate by adoption cohort (Sun and Abraham 2021) and aggregate to one
++#    average effect on the treated, with standard errors clustered by state
++policy_model <- feols(
++  log_wage ~ sunab(adoption_year, year) | state_code + year,
++  data = policy_panel,
++  vcov = ~state_code
++)
++policy_att <- summary(policy_model, agg = "ATT")
++
++policy_estimate <- data.frame(
++  term = "ATT",
++  estimate = round(unname(coef(policy_att)[["ATT"]]), 4L),
++  std_error = round(unname(se(policy_att)[["ATT"]]), 4L),
++  treated_states_int = length(adoption_year),
++  observations_int = nobs(policy_model)
++)
++
++write_csv(
++  policy_estimate,
++  file.path(path_tables, "example_policy_estimate.csv")
++)
++
++message("Wrote example_policy_estimate to output/tables/")
+--- a/code/run_all.R
++++ b/code/run_all.R
+@@ -15,7 +15,10 @@
+ run_script_flag <- c(
+   "01_build_dataset.R" = TRUE,
+   "02_analysis.R" = TRUE,
+-  "03_make_figures.R" = TRUE
++  "03_make_figures.R" = TRUE,
++  "04_min_wage.R" = TRUE,
++  "05_households.R" = TRUE,
++  "06_policy_panel.R" = TRUE
+ )
+ 
+ scripts_to_run <- names(run_script_flag)[run_script_flag]
+--- /dev/null
++++ b/data/example/households.csv
+@@ -0,0 +1,201 @@
++"household_id","state_code","year","household_income","household_weight","person_weight"
++1,"S13",2022,174700,224,50.4
++2,"S14",2022,33800,147.5,81.1
++3,"S07",2022,29300,295.7,60.1
++4,"S01",2023,19000,287.5,51.1
++5,"S07",2023,51900,140.7,122.2
++6,"S12",2023,104000,171.1,72.5
++7,"S20",2023,164000,150.4,50.2
++8,"S19",2022,77300,257.6,124.3
++9,"S04",2023,130400,173.7,131
++10,"S12",2023,64000,248.9,53.2
++11,"S12",2022,89100,118.9,126.2
++12,"S14",2023,57900,130.3,121
++13,"S07",2023,58800,278,92.7
++14,"S05",2022,98200,248.4,81
++15,"S11",2023,37100,289.1,134.2
++16,"S14",2023,141300,289.3,116.9
++17,"S07",2022,80600,267.5,68.2
++18,"S02",2022,152800,188.8,137
++19,"S19",2022,62400,102.2,142.8
++20,"S07",2022,59600,209.7,64
++21,"S19",2023,81000,189.9,138
++22,"S05",2023,124100,293.4,52
++23,"S06",2023,139400,142,109.7
++24,"S14",2022,67200,147.8,56.5
++25,"S20",2023,48100,115.8,136.4
++26,"S04",2023,77500,295.5,67.1
++27,"S13",2022,74300,300,105.2
++28,"S01",2023,42000,280.2,137.8
++29,"S06",2022,109200,281.8,141.5
++30,"S10",2023,91000,109.9,101.3
++31,"S06",2023,21800,155.3,100.2
++32,"S05",2022,102800,191.7,123.7
++33,"S05",2023,53900,286.3,69.4
++34,"S03",2022,25400,295.8,142
++35,"S17",2022,102700,124,149
++36,"S05",2023,80700,194.5,125.6
++37,"S03",2023,39000,125.3,74.5
++38,"S04",2022,125200,298.5,71.9
++39,"S20",2022,27100,297.1,72.9
++40,"S17",2023,123300,143,132.7
++41,"S01",2022,63700,265.1,94.6
++42,"S17",2022,100100,149.3,101.2
++43,"S03",2023,95800,150.1,52
++44,"S20",2023,89300,278.7,128.3
++45,"S16",2022,34600,285.1,122.8
++46,"S12",2023,34300,122.2,74.4
++47,"S18",2023,34400,132.4,55.2
++48,"S09",2023,21500,288.2,65.7
++49,"S07",2023,65500,287.6,148.8
++50,"S11",2023,68400,224.2,138.4
++51,"S04",2023,51300,172,104.4
++52,"S14",2023,78300,137.8,93.4
++53,"S13",2023,169700,243.9,111.9
++54,"S15",2022,66100,279.4,125.8
++55,"S19",2023,26200,287.4,53.4
++56,"S04",2023,138200,238.6,71.6
++57,"S10",2023,66300,133.9,63.2
++58,"S18",2022,84900,255.6,64.5
++59,"S17",2022,65100,264.4,136.2
++60,"S04",2023,51000,105.3,62.9
++61,"S14",2023,90000,251.6,96.8
++62,"S12",2022,26400,125.2,109.6
++63,"S17",2022,56800,229.1,58.9
++64,"S19",2022,31600,116.3,114.1
++65,"S08",2022,44200,117,106.8
++66,"S17",2023,65800,270.7,56.8
++67,"S13",2022,102700,178.4,126.3
++68,"S01",2023,26100,281,96.9
++69,"S17",2023,49500,170.3,112.9
++70,"S18",2023,70500,264.2,118.7
++71,"S08",2022,72700,131.9,109.2
++72,"S04",2023,123900,261.9,98.2
++73,"S02",2022,39800,179.4,90
++74,"S02",2022,148500,182.6,57.9
++75,"S03",2023,62300,206.5,69.1
++76,"S14",2023,23000,271,96.9
++77,"S11",2023,22800,136.2,132.4
++78,"S14",2022,132500,211.9,148.8
++79,"S03",2023,65300,267.7,105.1
++80,"S12",2022,64200,140.1,74
++81,"S08",2022,101800,294.6,58.7
++82,"S20",2023,56100,104.6,97
++83,"S15",2023,42600,281.5,121
++84,"S13",2023,150900,226,89.7
++85,"S16",2022,38900,288.8,98.4
++86,"S18",2022,55800,173.9,102.6
++87,"S06",2023,40700,259.1,126.7
++88,"S08",2022,50900,201,135.5
++89,"S04",2023,41300,216.6,76.6
++90,"S03",2022,76900,185.4,84.4
++91,"S16",2022,27900,262.4,81.6
++92,"S15",2023,147600,285.3,119.2
++93,"S07",2023,30800,228.3,57
++94,"S08",2022,30700,224.3,140.8
++95,"S18",2022,48800,219.9,136
++96,"S18",2022,82900,298.4,90.5
++97,"S10",2023,64500,181.2,118.8
++98,"S13",2023,36700,167,104.1
++99,"S09",2022,72500,159.7,99.7
++100,"S06",2022,81200,266.2,75.6
++101,"S17",2022,65300,282.8,54.2
++102,"S03",2022,103500,257.5,94.4
++103,"S15",2023,56600,285.7,130.9
++104,"S05",2023,13500,213.1,120.9
++105,"S17",2022,87500,278.5,81.5
++106,"S19",2022,39800,209.9,82.2
++107,"S18",2022,62800,114.1,144.6
++108,"S05",2022,33700,290.9,59.7
++109,"S06",2022,108600,103.2,85.4
++110,"S16",2023,41100,197.1,71.3
++111,"S14",2023,58000,298.4,62.3
++112,"S03",2023,67700,167.4,147
++113,"S03",2023,50600,258.6,78
++114,"S17",2022,31000,194.9,89.4
++115,"S07",2022,49100,178.9,83.5
++116,"S04",2023,196600,286.1,76.4
++117,"S18",2022,49400,148,64.5
++118,"S04",2022,64400,101.1,72.5
++119,"S10",2022,58700,257.4,146.6
++120,"S14",2023,63200,207.3,130.7
++121,"S05",2022,107300,198.2,127.8
++122,"S12",2022,47200,124.1,127.5
++123,"S13",2023,45500,144.7,64.2
++124,"S03",2022,43800,104,118.7
++125,"S04",2022,59500,293.6,78
++126,"S19",2023,60400,105,88.2
++127,"S18",2022,56000,214.6,61.3
++128,"S03",2022,64500,132.5,129.8
++129,"S17",2022,34300,284.6,53.1
++130,"S06",2023,134500,293.7,105.7
++131,"S08",2023,80100,132,57.4
++132,"S13",2022,26800,299.7,77.1
++133,"S06",2023,43600,233,97.5
++134,"S10",2023,91700,119.2,114.2
++135,"S07",2023,106100,116.2,99.9
++136,"S08",2022,49000,246.4,97.6
++137,"S06",2023,22100,211,138.2
++138,"S13",2022,34800,298.6,127.4
++139,"S01",2023,47000,159.2,133.1
++140,"S03",2022,127600,169.5,110.9
++141,"S18",2022,81500,240.9,90.4
++142,"S13",2022,72100,180.3,85.4
++143,"S14",2022,19400,186.3,125.5
++144,"S17",2023,112400,109.9,125.4
++145,"S16",2022,65900,208.2,124.9
++146,"S05",2023,21700,231.8,87.1
++147,"S06",2022,26100,132.8,92.1
++148,"S15",2023,99900,157.6,147.2
++149,"S06",2023,58200,279,100.1
++150,"S15",2023,81000,224.7,75.8
++151,"S01",2022,133900,120.5,146.5
++152,"S09",2023,77200,263.3,141.2
++153,"S05",2022,57900,173,97.7
++154,"S16",2023,81600,233.8,145.8
++155,"S02",2023,30600,250.9,56.3
++156,"S12",2022,55000,271.4,70.2
++157,"S04",2022,19200,264.7,78.9
++158,"S09",2023,65200,198.5,133.1
++159,"S06",2022,45600,164.8,83.7
++160,"S16",2022,49700,181.9,131.5
++161,"S02",2022,77700,123.9,100.8
++162,"S05",2023,78300,189.2,149.5
++163,"S02",2022,135700,156.7,81
++164,"S18",2022,85900,193.8,137.1
++165,"S03",2023,24200,226.1,116.1
++166,"S17",2022,62700,286.2,75.4
++167,"S09",2023,92500,160.7,94.1
++168,"S16",2023,135000,250.5,137.9
++169,"S12",2023,81600,272.5,124.4
++170,"S16",2023,103700,282.3,102.4
++171,"S02",2022,15000,198.1,106.9
++172,"S17",2023,32700,284.3,61.3
++173,"S17",2022,39500,170,114.9
++174,"S12",2023,107700,241.2,89.9
++175,"S11",2022,34300,289.9,110.2
++176,"S09",2023,82700,264.2,109.9
++177,"S20",2022,64700,132.2,146.2
++178,"S17",2022,110900,113.7,118.8
++179,"S09",2022,29200,138.3,116.1
++180,"S01",2023,47100,269.2,94.5
++181,"S07",2023,91100,284.2,97.1
++182,"S05",2023,268100,199.2,51.6
++183,"S05",2023,84100,132.8,143
++184,"S08",2023,133800,162.6,50.9
++185,"S08",2023,45900,233.8,56.6
++186,"S01",2023,35700,202,123.9
++187,"S12",2023,20200,178.3,128.8
++188,"S04",2022,34300,223.1,78.6
++189,"S07",2023,163100,206.4,105.4
++190,"S13",2022,59700,280,84.6
++191,"S03",2022,43000,194.2,127.7
++192,"S19",2023,89400,173.7,78.9
++193,"S05",2023,19700,295.7,110.5
++194,"S13",2023,67800,137.7,122.9
++195,"S18",2023,51900,286.1,87.7
++196,"S04",2022,171700,273.7,130.9
++197,"S15",2023,51000,268.2,58.7
++198,"S01",2022,83900,124.1,97
++199,"S08",2022,89200,154.2,65.4
++200,"S20",2023,124000,244.3,101.5
+--- /dev/null
++++ b/data/example/min_wage.csv
+@@ -0,0 +1,41 @@
++"state_fips","min_wage_year","min_wage"
++"01",2022,14.25
++"01",2023,14.5
++"02",2022,12.75
++"02",2023,13
++"03",2022,11.25
++"03",2023,11.75
++"04",2022,9.75
++"04",2023,10
++"05",2022,15
++"05",2023,15.25
++"06",2022,13.5
++"06",2023,14
++"07",2022,12
++"07",2023,12.25
++"08",2022,10.5
++"08",2023,10.75
++"09",2022,9
++"09",2023,9.5
++"10",2022,14.25
++"10",2023,14.5
++"11",2022,12.75
++"11",2023,13
++"12",2022,11.25
++"12",2023,11.75
++"13",2022,9.75
++"13",2023,10
++"14",2022,15
++"14",2023,15.25
++"15",2022,13.5
++"15",2023,14
++"16",2022,12
++"16",2023,12.25
++"17",2022,10.5
++"17",2023,10.75
++"18",2022,9
++"18",2023,9.5
++"19",2022,14.25
++"19",2023,14.5
++"20",2022,12.75
++"20",2023,13
+--- /dev/null
++++ b/data/example/state_fips.csv
+@@ -0,0 +1,21 @@
++"state_code","state_fips"
++"S01","01"
++"S02","02"
++"S03","03"
++"S04","04"
++"S05","05"
++"S06","06"
++"S07","07"
++"S08","08"
++"S09","09"
++"S10","10"
++"S11","11"
++"S12","12"
++"S13","13"
++"S14","14"
++"S15","15"
++"S16","16"
++"S17","17"
++"S18","18"
++"S19","19"
++"S20","20"
+--- a/drafts/example_note.md
++++ b/drafts/example_note.md
+@@ -11,6 +11,22 @@
+ With only 20 state clusters, the clustered standard error is itself imprecise; a real
+ analysis would report that limitation or use a small-cluster correction.
+ 
++Of the 500 workers read from the raw file, the 494 with a recorded age have a mean age
++of 41.3 years.
++
++Adding region-by-age fixed effects, on 281 workers, leaves the gap at -0.2071 log
++points. Blau and Kahn (2017) review why a gender gap persists in the United States.
++
++Real mean hourly wages grew 3.2 percent from 2022 to 2023, in 2023 dollars.
++
++Among prime-age workers, 28.1 percent were paid below their state's minimum wage in 2022
++and 15.8 percent in 2023, a decline of 12.3 percentage points.
++
++Mean household income is highest in the West region ($73,800).
++
++Across the states that adopted the wage policy, the estimated effect on log wages is
++0.0242 (clustered standard error 0.0083).
++
+ ## Where each number comes from
+ 
+ | Number in the text | Output file | Row and column |
+@@ -18,7 +34,18 @@
+ | 303 workers | `output/tables/example_mean_wage_by_region.csv` | `All regions`, `workers_int` |
+ | $18.23 | `output/tables/example_mean_wage_by_region.csv` | `All regions`, `weighted_mean_wage` |
+ | -0.1879 (0.0512); about 0.19 when rounded | `output/tables/example_wage_model_coefficients.csv` | `female_flagTRUE`, `estimate` and `std_error` |
++| Mean age 41.3 | `output/tables/example_sample_profile.csv` | `mean_age` |
++| 281 workers; -0.2071 | `output/tables/example_wage_model_robustness.csv` | `region-by-age fixed effects`, `observations_int` and `estimate` |
++| 3.2 percent | `output/tables/example_wage_by_year.csv` | `real_wage_growth_pct` |
++| 28.1 and 15.8 percent | `output/tables/example_min_wage_share.csv` | `share_below_pct` by `year` |
++| $73,800 | `output/tables/example_household_income_by_region.csv` | `West`, `mean_household_income` |
++| 0.0242 (0.0083) | `output/tables/example_policy_estimate.csv` | `estimate` and `std_error` |
+ 
+ `code/01_build_dataset.R` builds the sample, and `code/02_analysis.R` writes both tables.
+ The formatted regression table is `output/tables/example_wage_model.tex` (from
+ `fixest::etable`).
++
++## References
++
++Blau, Francine D., and Lawrence M. Kahn. 2017. "The Gender Wage Gap: Extent, Trends, and
++Explanations." *Journal of Economic Literature* 55 (3): 789–865.

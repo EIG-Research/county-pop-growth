@@ -1,0 +1,32 @@
+# >>> eig-template: managed by port_template.py; edit outside this block >>>
+# The template's checks compare its files byte for byte, so its paths are LF on every
+# platform. The project's own files keep the line endings they had.
+Infrastructure/** text=auto eol=lf
+.claude/** text=auto eol=lf
+.codex/** text=auto eol=lf
+.agents/** text=auto eol=lf
+records/** text=auto eol=lf
+.brain-manifest text=auto eol=lf
+.eig-port text=auto eol=lf
+PROJECT.md text=auto eol=lf
+AGENTS.md text=auto eol=lf
+CLAUDE.md text=auto eol=lf
+Makefile text=auto eol=lf
+CHANGELOG.md text=auto eol=lf
+NOTICE text=auto eol=lf
+.lintr text=auto eol=lf
+.renvignore text=auto eol=lf
+*.patch -text
+*.pdf binary
+*.png binary
+*.jpg binary
+*.eps binary
+*.ai binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.parquet binary
+*.rds binary
+*.dta binary
+# <<< eig-template <<<

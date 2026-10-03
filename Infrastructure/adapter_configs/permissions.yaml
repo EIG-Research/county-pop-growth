@@ -1,0 +1,228 @@
+# The one command policy for both adapters. Edit here, then run `make brain-sync`: brain.py
+# renders it into `permissions` in .claude/settings.json (the rest of that file comes from
+# claude.settings.json) and into .codex/rules/template.rules, and `brain.py check` fails when
+# either rendered file drifts from it.
+#
+# Each entry sets one decision for the commands it lists:
+#   allow      Claude pre-approves them (`permissions.allow`). Codex gets no rule: an execpolicy
+#              `allow` runs its command outside the sandbox and without a prompt.
+#   prompt     Codex asks first (`prompt`); Claude rules, if any, go to `permissions.ask`.
+#   forbidden  Claude denies them (`permissions.deny`) and Codex refuses them (`forbidden`).
+# `claude:` holds Claude permission rules; `codex:` holds execpolicy prefix rules, each with
+# `match` / `not_match` examples that must agree with its pattern (Codex checks them when it
+# loads the file, and one failure drops every project and user rule; test_hooks.py checks them
+# first). `reason` says why the entry exists (required with Codex rules, where it becomes each
+# rule's justification); `note` is a comment rendered above the Codex rules.
+# Where both adapters can express a command, give both, so the policies cannot diverge.
+#
+# Allow list design: enumerate scripts rather than globbing a scripts directory, and leave out
+# anything destructive, port-opening, or outward-facing (test_hooks.py enforces both). A `*`
+# admits more than it seems to: separate it from the command with a space (`git diff *`, which
+# still matches bare `git diff`), so it cannot extend a word (`git diff*` matched `git difftool`);
+# and when it would admit a writer (`--output=`) or a path out of its directory (`..`), a prompt
+# rule for that form overrides the allow (test_hooks.py probes all three).
+
+codex_header: |
+  Project-local Codex execution policy (Starlark), generated from
+  Infrastructure/adapter_configs/permissions.yaml by `make brain-sync`; do not edit.
+
+  Codex execpolicy is experimental, and it loads only for a trusted project.
+  This file holds `prompt` and `forbidden` rules only. It deliberately has no
+  `allow` rule: an `allow` rule runs the matching command outside the sandbox
+  and without a prompt, which would exempt it from the workspace-write sandbox
+  in `codex.config.toml`. Everything not named here runs under the sandbox and
+  approval policy as usual.
+
+  Design rules, enforced where the policy is authored:
+    1. Every rule sets `decision`. A `prefix_rule` without one defaults to
+       `allow`.
+    2. Every rule carries inline `match` / `not_match` cases, and they must agree
+       with its pattern: Codex validates them when it loads the file, and one
+       failing example drops every project and user rule, the user's own
+       `~/.codex/rules/default.rules` included. `test_hooks.py` checks them.
+    3. Destructive operations are `forbidden`, not `prompt`. A prompt is a
+       decision the model can talk a user into; forbidden is not.
+
+  Verify after editing (requires the Codex CLI):
+    codex execpolicy check --rules .codex/rules/template.rules -- git push --force
+
+policy:
+  - decision: allow
+    note: The template's own check, test, and read-only helper commands.
+    claude:
+      - Bash(make brain-sync)
+      - Bash(make brain-check)
+      - Bash(make parity-check)
+      - Bash(make literature-check)
+      - Bash(make dataset-registry-check)
+      - Bash(make style-tokens-check)
+      - Bash(make maintenance-check)
+      - Bash(python3 Infrastructure/scripts/check_internal_path_references.py *)
+      - Bash(python3 Infrastructure/scripts/check_catalog_staleness.py *)
+      - Bash(python3 Infrastructure/scripts/check_style_token_drift.py *)
+      - Bash(python3 Infrastructure/scripts/validate_literature_catalog.py *)
+      - Bash(python3 Infrastructure/scripts/validate_dataset_registry.py *)
+      - Bash(python3 Infrastructure/scripts/validate_replication_manifest.py *)
+      - Bash(python3 Infrastructure/scripts/test_hooks.py *)
+      - Bash(python3 Infrastructure/scripts/test_brain.py *)
+      - Bash(python3 Infrastructure/scripts/test_review_board.py *)
+      - Bash(python3 Infrastructure/scripts/test_war_room.py *)
+      - Bash(python3 Infrastructure/scripts/test_replication.py *)
+      - Bash(python3 Infrastructure/scripts/test_review_fleet.py *)
+      - Bash(python3 Infrastructure/scripts/test_review_eval.py *)
+      - Bash(python3 Infrastructure/scripts/test_path_references.py *)
+      - Bash(python3 Infrastructure/scripts/review_board.py status *)
+      - Bash(python3 Infrastructure/scripts/review_board.py lint *)
+      - Bash(python3 Infrastructure/scripts/review_board.py summary *)
+      - Bash(python3 Infrastructure/scripts/brain.py check)
+      - Bash(python3 Infrastructure/scripts/brain.py check *)
+      - Bash(python3 Infrastructure/scripts/brain.py sync)
+      - Bash(python3 Infrastructure/scripts/run_maintenance_checks.py)
+      - Bash(python3 Infrastructure/style/scripts/sync_tokens.py)
+      - Bash(python3 Infrastructure/style/scripts/sync_tokens.py --check)
+      - Bash(python3 Infrastructure/style/scripts/compliance/check_datawrapper_manifest.py *)
+      - Bash(python3 Infrastructure/style/scripts/compliance/check_legacy_metadata.py *)
+      - Bash(python3 Infrastructure/style/scripts/fonts/check-fonts.py *)
+
+  # Added with the Python runner (Phase 2 Stage E), beyond the Bash runner's one entry.
+  - decision: allow
+    reason: >-
+      Read-only test runs. The runner's only options are --list and --only NAME, and every
+      registered check reads the repository and writes only to a temporary directory.
+    claude:
+      - Bash(python3 Infrastructure/scripts/run_maintenance_checks.py *)
+
+  - decision: allow
+    reason: >-
+      Read-only test run. It runs the registered style-tests suite, which renders only into
+      temporary directories.
+    claude:
+      - Bash(make style-test)
+
+  - decision: allow
+    reason: >-
+      Read-only test run. It runs the registered localapp-tests suite, which writes only to
+      temporary directories and binds only loopback ports it closes.
+    claude:
+      - Bash(make localapp-test)
+
+  - decision: allow
+    note: The project's own analysis code, run from the project root.
+    claude:
+      - Bash(Rscript code/*)
+      - Bash(python3 code/*)
+
+  - decision: allow
+    note: Read-only git.
+    claude:
+      - Bash(git status *)
+      - Bash(git diff *)
+      - Bash(git log *)
+      - Bash(git show *)
+      - Bash(git branch)
+      - Bash(git ls-files *)
+
+  - decision: prompt
+    reason: >-
+      The allows above end in `*`, which admits more than they mean: `--output=<file>` makes
+      git diff, log, and show overwrite a file, `..` walks `python3 code/*` out of code/
+      (`code/../Infrastructure/scripts/template_reset.sh`), and `git difftool -x <cmd>` runs
+      any command. An ask rule beats an allow in Claude, so these forms ask first;
+      test_hooks.py probes every allow for them.
+    claude:
+      - Bash(git *--output*)
+      - Bash(git difftool*)
+      - Bash(Rscript code/*..*)
+      - Bash(python3 code/*..*)
+
+  - decision: prompt
+    reason: --write overwrites the three generated theme files; confirm first.
+    codex:
+      - pattern: [python3, Infrastructure/style/scripts/sync_tokens.py, --write]
+        match: [python3 Infrastructure/style/scripts/sync_tokens.py --write]
+        not_match: [python3 Infrastructure/style/scripts/sync_tokens.py --check]
+
+  - decision: prompt
+    reason: latexmk can run arbitrary Perl (-e, -r) or commands (-pdflatex=); confirm each build.
+    note: |
+      latexmk is prompted. Its `-e <code>` and `-r <rcfile>` options run
+      arbitrary Perl, and `-pdflatex=<cmd>` (and the other engine-command options)
+      replace the engine with any command. Those flags can follow any safe-looking
+      prefix (`latexmk -pdf -e ...`), and prefix rules cannot exclude a later
+      argument, so every latexmk build asks first.
+    codex:
+      - pattern: [latexmk]
+        match: [latexmk -pdf main.tex, latexmk -C, "latexmk -pdf -e 'system(1)' main.tex"]
+        not_match: [pdflatex main.tex]
+
+  - decision: prompt
+    reason: Publishing is outward-facing and requires explicit user approval.
+    codex:
+      - pattern: [git, push]
+        match: [git push, git push origin main]
+        not_match: [git status, git fetch]
+
+  - decision: forbidden
+    reason: Force-push rewrites shared history. Coordinate history repair with the user instead.
+    note: |
+      Force-push is forbidden in every flag position, not just immediately after
+      `git push`. The Codex rules below cover the bare, remote-suffixed, and
+      remote-plus-ref-suffixed forms, and a `+` refspec; a single rule catches only
+      the first. Claude's `*` matches anywhere, so its rules cover a flag after any
+      remote or ref (test_hooks.py checks every Codex example against them).
+    claude:
+      - Bash(git push --force*)
+      - Bash(git push -f*)
+      - Bash(git push +*)
+      - Bash(git push * --force*)
+      - Bash(git push * -f*)
+      - Bash(git push * +*)
+    codex:
+      - pattern: [git, push, [--force, -f, --force-with-lease]]
+        match: [git push --force, git push -f, git push --force-with-lease]
+        not_match: [git push, git push origin main]
+      - pattern: [git, push, [origin, upstream], [--force, -f, --force-with-lease]]
+        match: [git push origin --force, git push upstream -f, git push origin --force-with-lease]
+        not_match: [git push origin main, git push upstream HEAD]
+      - pattern: [git, push, [origin, upstream], [main, master, HEAD], [--force, -f, --force-with-lease]]
+        match: [git push origin main --force, git push upstream master -f, git push origin HEAD --force-with-lease]
+        not_match: [git push origin main, git push upstream HEAD]
+      - pattern: [git, push, [+main, +master, +HEAD]]
+        match: [git push +main, git push +HEAD]
+        not_match: [git push, git push main]
+      - pattern: [git, push, [origin, upstream], [+main, +master, +HEAD]]
+        match: [git push origin +main, git push upstream +HEAD]
+        not_match: [git push origin main, git push upstream HEAD]
+
+  - decision: forbidden
+    reason: Raw data is kept exactly as received; derived data goes to data/processed/.
+    claude:
+      - Edit(data/raw/**)
+
+  - decision: forbidden
+    reason: Hard reset destroys uncommitted work. Use a reversible operation after explicit review.
+    codex:
+      - pattern: [git, reset, --hard]
+        match: [git reset --hard, git reset --hard HEAD~1]
+        not_match: [git reset --soft HEAD~1, git status]
+
+  - decision: forbidden
+    reason: Forced clean irreversibly deletes untracked work, including un-committed drafts and data.
+    codex:
+      - pattern: [git, clean, [-f, -fd, -df, -fx, -xfd]]
+        match: [git clean -f, git clean -fd, git clean -xfd]
+        not_match: [git clean -n, git status]
+
+  - decision: forbidden
+    reason: Discarding working-tree changes needs a separately reviewed recovery plan.
+    codex:
+      - pattern: [git, [restore, checkout], --]
+        match: [git restore -- README.md, git checkout -- README.md]
+        not_match: [git restore --staged README.md, git checkout feature-branch]
+
+  - decision: forbidden
+    reason: Recursive forced deletion is not recoverable. Delete explicitly, one target at a time.
+    codex:
+      - pattern: [rm, [-rf, -fr, -Rf, -fR]]
+        match: [rm -rf build, rm -fr output]
+        not_match: [rm -f one.tmp, rmdir empty-directory]

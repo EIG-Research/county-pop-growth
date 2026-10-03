@@ -1,0 +1,16 @@
+# Owner-flagged: four treated states with conventional clustered errors.
+
+--- a/code/06_policy_panel.R
++++ b/code/06_policy_panel.R
+@@ -35,10 +35,7 @@
+ ################################################################################
+ 
+ # 3) The year each treated state adopted the policy; other states never do
+-adoption_year <- c(
+-  S02 = 2017L, S05 = 2017L, S07 = 2018L, S10 = 2019L,
+-  S12 = 2019L, S15 = 2020L, S17 = 2021L, S19 = 2021L
+-)
++adoption_year <- c(S05 = 2017L, S10 = 2019L, S15 = 2020L, S19 = 2021L)
+ 
+ # 4) One row per state and year; the effect grows with years since adoption
+ set.seed(20260929)

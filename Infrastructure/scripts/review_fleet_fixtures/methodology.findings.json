@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "lens": "MR",
+  "target": "fixture-project",
+  "review_date": "2026-09-29",
+  "summary": "The regional means are weighted; the open issues are a small cluster count, disclosed in the note, and an unexplained weighted regression.",
+  "context": {
+    "Identification strategy": "Descriptive regression with fixed effects (inferred)",
+    "Clustering level": "state, 20 clusters (inferred)"
+  },
+  "files_reviewed": ["code/02_analysis.R"],
+  "findings": [
+    {
+      "check_id": "MR-INFERENCE",
+      "title": "Twenty clusters with conventional CRVE",
+      "severity": "LOW",
+      "confidence": "high",
+      "file": "code/02_analysis.R",
+      "line": 88,
+      "evidence": {
+        "claim": "Clustered standard errors with 20 clusters can be too small.",
+        "found": "vcov = ~state_code over 20 states; the note discloses the limitation.",
+        "quote": "vcov = ~state_code",
+        "verified_by": "Counted distinct state_code values in data/example/states.csv: 20."
+      },
+      "fix": "Report a wild cluster bootstrap p-value beside the clustered one.",
+      "related": ["CC-UNDISCLOSED"]
+    },
+    {
+      "check_id": "MR-WEIGHTS",
+      "title": "Regression weights stated without a rationale",
+      "severity": "HIGH",
+      "confidence": "medium",
+      "file": "code/02_analysis.R",
+      "evidence": {
+        "claim": "The weighted regression gives no reason for weighting.",
+        "found": "No comment or draft text explains why the regression is weighted.",
+        "verified_by": "Searched the script and drafts for a rationale.",
+        "looked_in": ["code/02_analysis.R, section 5", "drafts/example_note.md"]
+      },
+      "refutation": "Checked whether weighted and unweighted estimates are shown to agree; they are not shown."
+    }
+  ]
+}

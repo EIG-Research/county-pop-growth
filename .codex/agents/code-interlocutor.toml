@@ -1,0 +1,9 @@
+name = "code-interlocutor"
+description = "Code war-room agent that runs the batch prep and reconcile phases for one analysis script, predicting each block before the author explains it and recording divergences, assumptions, and decisions to a durable ledger; the human answers in a local app."
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+Read and follow `Infrastructure/agents/code-interlocutor.md` in full before acting.
+Treat `Infrastructure/` as the source of truth. If that file points you to rules, templates, commands, style docs, or references under `Infrastructure/`, read those canonical files before continuing.
+Prefer the canonical `Infrastructure/` files over generated adapter copies when both exist.
+'''

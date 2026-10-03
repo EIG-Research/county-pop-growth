@@ -1,0 +1,52 @@
+# Fixture prediction set for proj_a code/sample.qmd.
+b001:
+  title: YAML front matter
+  density: low
+  prediction:
+    what_it_does: Sets the document title.
+    inferred_intent: Give the rendered document a heading.
+    assumptions: []
+    confidence: high
+b002:
+  title: Section heading
+  density: low
+  prediction:
+    what_it_does: A second-level Markdown heading.
+    inferred_intent: Open the document's only section.
+    assumptions: []
+    confidence: high
+b003:
+  title: Opening prose
+  density: low
+  prediction:
+    what_it_does: One sentence saying nothing here is a real result.
+    inferred_intent: Warn the reader that the document is synthetic.
+    assumptions: []
+    confidence: high
+b004:
+  title: Setup chunk
+  density: low
+  prediction:
+    what_it_does: Attaches dplyr in a chunk labelled through a cell option.
+    inferred_intent: Make the native pipe's helpers available to later chunks.
+    assumptions:
+      - Chunks run in document order in one session.
+    confidence: medium
+b005:
+  title: Age restriction chunk
+  density: high
+  prediction:
+    what_it_does: Keeps rows of people where age is 25 or older, using the native pipe.
+    inferred_intent: Restrict the sample to prime-age adults.
+    assumptions:
+      - The people object exists in the environment already.
+      - The lower bound is meant to be inclusive.
+    confidence: low
+b006:
+  title: Closing prose
+  density: low
+  prediction:
+    what_it_does: One closing sentence of prose.
+    inferred_intent: End the document.
+    assumptions: []
+    confidence: high
