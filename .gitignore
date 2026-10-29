@@ -17,3 +17,4 @@ records/war_rooms/**/*.lock
 .claude/worktrees/
 Infrastructure/local/
 # <<< eig-template <<<
+.DS_Store
