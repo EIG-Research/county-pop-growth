@@ -1,9 +1,0 @@
-{
-  "stamp": true,
-  "fail": false,
-  "figures": {
-    "fig-bars": {"color": [25, 79, 139], "values": [10, 18, 24]},
-    "fig-shares": {"color": [2, 65, 64], "values": [20, 12, 8]},
-    "fig-table": {"color": [94, 156, 134], "values": [6, 6, 6], "svg": false}
-  }
-}

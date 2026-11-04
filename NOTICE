@@ -1,6 +1,0 @@
-Internal to EIG. This repository, and every project created from it, is for internal EIG
-use only and must never be made public. It bundles licensed fonts and EIG logo files. To
-release a project's code and results, build a replication package, which exports an
-allowlisted subset to a fresh repository.
-
-[TO FILL: owner]
