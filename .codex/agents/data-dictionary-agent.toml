@@ -1,8 +1,0 @@
-name = "data-dictionary-agent"
-description = "Acquires authoritative data dictionaries pinned to the vintage in use and converts the relevant variables into structured registry entries and Markdown docs. Use upstream of analysis to document a project's data sources."
-sandbox_mode = "workspace-write"
-developer_instructions = '''
-Read and follow `Infrastructure/agents/data-dictionary-agent.md` in full before acting.
-Treat `Infrastructure/` as the source of truth. If that file points you to rules, templates, commands, style docs, or references under `Infrastructure/`, read those canonical files before continuing.
-Prefer the canonical `Infrastructure/` files over generated adapter copies when both exist.
-'''

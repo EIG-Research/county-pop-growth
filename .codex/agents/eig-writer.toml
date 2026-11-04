@@ -1,8 +1,0 @@
-name = "eig-writer"
-description = "EIG writing coach: feedback on an author's draft (structure, argument, clarity, audience); never drafts or rewrites prose."
-sandbox_mode = "read-only"
-developer_instructions = '''
-Read and follow `Infrastructure/agents/eig-writer.md` in full before acting.
-Treat `Infrastructure/` as the source of truth. If that file points you to rules, templates, commands, style docs, or references under `Infrastructure/`, read those canonical files before continuing.
-Prefer the canonical `Infrastructure/` files over generated adapter copies when both exist.
-'''

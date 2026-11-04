@@ -1,2 +1,0 @@
-linters: linters_with_defaults(line_length_linter(80L))
-encoding: "UTF-8"
